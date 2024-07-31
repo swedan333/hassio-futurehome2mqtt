@@ -1,9 +1,7 @@
 import json
-import time
 
 import pyfimptoha.fimp as fimp
 import pyfimptoha.homeassistant as homeassistant
-import pyfimptoha.mode as mode
 
 
 class Client:
@@ -33,17 +31,12 @@ class Client:
     def start(self):
         mqtt = self._mqtt
 
-        # Request FIMP mode
-        topic_receive_mode = "pt:j1/mt:rsp/rt:app/rn:homeassistant/ad:mode"
-        mqtt.subscribe(topic_receive_mode)
-        fimp.send_mode_request(mqtt)
-
         # Request FIMP devices
         topic_discover = "pt:j1/mt:rsp/rt:app/rn:homeassistant/ad:flow1"
         mqtt.subscribe(topic_discover)
         fimp.send_discovery_request(mqtt)
 
-        # Subscribe to home assistant status where ha announces restarts
+        # Subscribe to Home Assistant status where Home Assistant announces restarts
         self._mqtt.subscribe("homeassistant/status")
 
     def on_message(self, client, userdata, msg):
@@ -52,20 +45,16 @@ class Client:
         """
         payload = str(msg.payload.decode("utf-8"))
 
-        # Discover FIMP devices and create HA components out of them
+        # Discover FIMP devices, shortcuts, mode and create Home Aassistant components out of them
         if msg.topic == self._topic_discover:
             data = json.loads(payload)
             homeassistant.create_components(
                 devices=data["val"]["param"]["device"],
+                rooms=data["val"]["param"]["room"],
+                shortcuts=data["val"]["param"]["shortcut"],
+                mode=data["val"]["param"]["house"]["mode"],
                 mqtt=self._mqtt,
                 selected_devices=self._selected_devices,
-            )
-        elif msg.topic == "pt:j1/mt:rsp/rt:app/rn:homeassistant/ad:mode":
-            # Create mode sensor  (home, away, sleep and vacation)
-            data = json.loads(payload)
-            mode.create(
-                mqtt=self._mqtt,
-                data=data,
             )
         elif msg.topic == "homeassistant/status" and payload == "online":
             # Home Assistant was restarted - Push everything again

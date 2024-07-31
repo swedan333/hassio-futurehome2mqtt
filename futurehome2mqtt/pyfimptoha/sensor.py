@@ -1,219 +1,256 @@
-"""
-Creates sensors in Home Assistant based on FIMP services
-"""
 import json
 import typing
 
 
-def battery(
-        device: typing.Any,
+def new_sensor(
         mqtt,
-        service,
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
 ):
-    address = device["fimp"]["address"]
-    name = device["client"]["name"]
-    # todo add room
-    room = device["room"]
+    """
+    Creates sensors in Home Assistant based on FIMP services
+    """
 
-    identifier = f"fh_{address}_battery"
-    state_topic = f"pt:j1/mt:evt{service['addr']}"
+    if service_name == "battery":
+        return battery(**locals())
+
+    elif service_name == "sensor_lumin":
+        return sensor_lumin(**locals())
+
+    elif service_name == "sensor_presence":
+        return sensor_presence(**locals())
+
+    elif service_name == "sensor_temp":
+        return sensor_temp(**locals())
+
+    elif service_name == "sensor_humid":
+        return sensor_humid(**locals())
+
+    else:
+        print("Failed to create sensor")
+        return
+
+
+def battery(
+        mqtt,
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
+):
     unit_of_measurement = "%"
-    component = {
-        "name": f"{name} (batteri)",
-        "object_id": identifier,
-        "unique_id": identifier,
-        "state_topic": state_topic,
+    battery_component = {
+        "name": "(batteri)",
         "device_class": "battery",
+        "entity_category": "diagnostic",
         "unit_of_measurement": unit_of_measurement,
         "value_template": "{{ value_json.val | round(0) }}"
     }
-    payload = json.dumps(component)
+
+    # Merge default_component with battery_component
+    merged_component = {**default_component, **battery_component}
+
+    payload = json.dumps(merged_component)
     mqtt.publish(f"homeassistant/sensor/{identifier}/config", payload)
 
     # Queue statuses
     status = None
-    if device.get("param") and device['param'].get('batteryPercentage'):
-        value = device['param']['batteryPercentage']
-        data = {
-            "props": {
-                "unit": unit_of_measurement
-            },
-            "serv": "battery",
-            "type": "evt.health.report",
-            "val": value,
-        }
-
-        payload = json.dumps(data)
+    payload = queue_status(
+        param="batteryPercentage",
+        device=device,
+        props={},
+        serv="battery",
+        typ="evt.lvl.report",
+        val_t="int"
+    )
+    if payload:
         status = (state_topic, payload)
     return status
 
 
 def sensor_lumin(
-        device: typing.Any,
         mqtt,
-        service,
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
 ):
-    address = device["fimp"]["address"]
-    name = device["client"]["name"]
-    # todo add room
-    room = device["room"]
-
-    identifier = f"fh_{address}_illuminance"
-    state_topic = f"pt:j1/mt:evt{service['addr']}"
-    unit_of_measurement = "Lux"
-    component = {
-        "name": f"{name} (belysningsstyrke)",
-        "object_id": identifier,
-        "unique_id": identifier,
-        "state_topic": state_topic,
+    unit_of_measurement = "lx"
+    lumin_component = {
+        "name": "(belysningsstyrke)",
         "device_class": "illuminance",
         "unit_of_measurement": unit_of_measurement,
         "value_template": "{{ value_json.val | round(0) }}"
     }
-    payload = json.dumps(component)
+
+    # Merge default_component with lumin_component
+    merged_component = {**default_component, **lumin_component}
+
+    payload = json.dumps(merged_component)
     mqtt.publish(f"homeassistant/sensor/{identifier}/config", payload)
 
     # Queue statuses
     status = None
-    if device.get("param") and device['param'].get('illuminance'):
-        value = device['param']['illuminance']
-        data = {
-            "props": {
-                "unit": unit_of_measurement
-            },
-            "serv": "sensor_lumin",
-            "type": "evt.sensor.report",
-            "val": value,
-            "val_t": "float",
-        }
-
-        payload = json.dumps(data)
+    payload = queue_status(
+        param="illuminance",
+        device=device,
+        props={"unit": "Lux"},
+        serv="sensor_lumin",
+        typ="evt.sensor.report",
+        val_t="float"
+    )
+    if payload:
         status = (state_topic, payload)
     return status
 
 
 def sensor_presence(
-        device: typing.Any,
         mqtt,
-        service,
-):
-    address = device["fimp"]["address"]
-    name = device["client"]["name"]
-    # todo add room
-    room = device["room"]
-
-    identifier = f"fh_{address}_sensor_presence"
-    state_topic = f"pt:j1/mt:evt{service['addr']}"
-    component = {
-        "name": f"{name} (bevegelse)",
-        "object_id": identifier,
-        "unique_id": identifier,
-        "state_topic": state_topic,
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
+    ):
+    presence_component = {
+        "name": "(bevegelse)",
         "device_class": "motion",
         "payload_off": False,
         "payload_on": True,
         "value_template": "{{ value_json.val }}",
     }
-    payload = json.dumps(component)
+
+    # Merge default_component with presence_component
+    merged_component = {**default_component, **presence_component}
+
+    payload = json.dumps(merged_component)
     mqtt.publish(f"homeassistant/binary_sensor/{identifier}/config", payload)
 
     # Queue statuses
-    value = False
-    if device.get("param") and device['param'].get('presence'):
-        value = device['param']['presence']
-    data = {
-        "props": {},
-        "serv": "sensor_presence",
-        "type": "evt.presence.report",
-        "val_t": "bool",
-        "val": value
-    }
-    payload = json.dumps(data)
-    status = (state_topic, payload)
+    status = None
+    payload = queue_status(
+        param="presence",
+        device=device,
+        props={},
+        serv="sensor_presence",
+        typ="evt.presence.report",
+        val_t="bool"
+    )
+    if payload:
+        status = (state_topic, payload)
     return status
 
 
 def sensor_temp(
-        device: typing.Any,
         mqtt,
-        service,
-):
-    address = device["fimp"]["address"]
-    name = device["client"]["name"]
-    # todo add room
-    room = device["room"]
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
+    ):
 
-    identifier = f"fh_{address}_temperature"
-    state_topic = f"pt:j1/mt:evt{service['addr']}"
     unit_of_measurement = "°C"
-    component = {
-        "name": f"{name} (temperatur)",
-        "object_id": identifier,
-        "unique_id": identifier,
-        "state_topic": state_topic,
+    temp_component = {
+        "name": "(temperatur)",
         "device_class": "temperature",
+        "unit_of_measurement": unit_of_measurement,
+        "value_template": "{{ value_json.val | round(1) }}",
+        # "json_attributes_topic": f"homeassistant/sensor/{identifier}/attributes",
+        # "json_attributes_template": "{{ value_json | tojson }}",
+        # "force_update": True
+    }
+
+    # Merge default_component with temp_component
+    merged_component = {**default_component, **temp_component}
+
+    payload = json.dumps(merged_component)
+    mqtt.publish(f"homeassistant/sensor/{identifier}/config", payload)
+
+    # print(device)
+    # # Add attribute for main thing_role if present (used for current_temp in thermostats)
+    # if device["services"]["sensor_temp"]["props"].get("thing_role") and \
+    #             device["services"]["sensor_temp"]["props"]["thing_role"] == "main":
+    #     # ! DEBUG
+    #     print("Found it")
+    #     attribute = {
+    #         "thing_role_main":{
+    #         "address": default_component["device"]["identifiers"],
+    #         "topic": f"pt:j1/mt:evt{device['services']['sensor_temp']['addr']}"
+    #         }
+    #     }
+    #     attribute_json = json.dumps(attribute)
+    #     mqtt.publish(f"homeassistant/sensor/{identifier}/attributes", attribute_json)
+
+    # Queue statuses
+    status = None
+    payload = queue_status(
+        param="temperature",
+        device=device,
+        props={"unit": "C"},
+        serv="sensor_temp",
+        typ="evt.sensor.report",
+        val_t="float"
+    )
+    if payload:
+        status = (state_topic, payload)
+    return status
+
+
+def sensor_humid(
+        mqtt,
+        device,
+        service_name,
+        state_topic,
+        identifier,
+        default_component
+    ):
+    unit_of_measurement = "%"
+    humid_component = {
+        "name": "(luftfuktighet)",
+        "device_class": "humidity",
         "unit_of_measurement": unit_of_measurement,
         "value_template": "{{ value_json.val | round(0) }}"
     }
-    payload = json.dumps(component)
+
+    # Merge default_compontent with humid_component
+    merged_component = {**default_component, **humid_component}
+
+    payload = json.dumps(merged_component)
     mqtt.publish(f"homeassistant/sensor/{identifier}/config", payload)
 
     # Queue statuses
     status = None
-    if device.get("param") and device['param'].get('temperature'):
-        value = device['param']['temperature']
-        data = {
-            "props": {
-                "unit": unit_of_measurement
-            },
-            "serv": "sensor_temp",
-            "type": "evt.sensor.report",
-            "val": value,
-            "val_t": "float",
-        }
-        payload = json.dumps(data)
+    payload = queue_status(
+        param="humidity",
+        device=device,
+        props={"unit": unit_of_measurement},
+        serv="sensor_humid",
+        typ="evt.sensor.report",
+        val_t="string"
+    )
+    if payload:
         status = (state_topic, payload)
     return status
 
 
-def meter_elec(
-        device: typing.Any,
-        mqtt,
-        service,
-):
-    address = device["fimp"]["address"]
-    name = device["client"]["name"]
-    # todo add room
-    room = device["room"]
-
-    identifier = f"fh_{address}_meter_elec"
-    state_topic = f"pt:j1/mt:evt{service['addr']}"
-    component = {
-        "name": f"{name} (forbruk)",
-        "object_id": identifier,
-        "unique_id": identifier,
-        "state_topic": state_topic,
-        "device_class": "energy",
-        "state_class": "total_increasing",
-        "unit_of_measurement": "kWh",
-        "value_template": "{{ value_json.val }}"
-    }
-    payload = json.dumps(component)
-    mqtt.publish(f"homeassistant/sensor/{identifier}/config", payload)
-
-    # Queue statuses
-    status = None
-    if device.get("param") and device['param'].get('energy'):
-        value = device['param']['energy']
+def queue_status(param, device, props, serv, typ, val_t):
+    payload = None
+    if device.get("param") and device["param"].get(f"{param}"):
+        value = device["param"][f"{param}"]
         data = {
-            "props": {
-                "unit": "kWh"
-            },
-            "serv": "meter_elec",
-            "type": "evt.meter.report",
+            "props": props,
+            "serv": f"{serv}",
+            "type": f"{typ}",
             "val": value,
+            "val_t": val_t,
+            "src": "homeassistant"
         }
 
         payload = json.dumps(data)
-        status = (state_topic, payload)
-    return status
+    return payload

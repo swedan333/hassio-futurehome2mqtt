@@ -1,11 +1,16 @@
+import os
+import sys
+import time
+
+from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
-import os, sys, time
 import pyfimptoha.client as fimp
+
+load_dotenv()
 
 """
 todo Refactor these functions, move to pyfimotopa/client.py
 """
-
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -85,7 +90,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "help":
         print(
-            'Usage: \n"python run.py serve" to fetch data form fimp and push components to Home Assistant'
+            'Usage: \n"python run.py serve" to fetch data from fimp and push components to Home Assistant'
         )
 
     elif len(sys.argv) > 1 and sys.argv[1] == "serve":
