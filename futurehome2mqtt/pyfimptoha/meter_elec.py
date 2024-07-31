@@ -6,7 +6,7 @@ def new_sensor(
         device,
         service_name,
         state_topic,
-        identifier_default,
+        identifier,
         default_component
 ):
     """
@@ -14,10 +14,11 @@ def new_sensor(
     """
 
     sup_units: list = device["services"][service_name]["props"]["sup_units"]
+    identifier_for_unit = identifier
     statuses = []
 
     for unit in sup_units:
-        identifier = f"{identifier_default}_{unit}"
+        identifier = f"{identifier_for_unit}_{unit}"
 
         if unit == "kWh":
             unit_of_measurement = "kWh"

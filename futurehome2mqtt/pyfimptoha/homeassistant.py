@@ -70,8 +70,8 @@ def create_components(
                     "identifiers": f"{adapter}_{address}",
                     "name": f"{name}",
                     "suggested_area": f"{room_alias}",
-                    "hw_version": device["model"] if device["model"] else "",
-                    "model": device["modelAlias"] if device["modelAlias"] else "",
+                    "hw_version": device["model"] if device.get("model") and device["model"] else "",
+                    "model": device["modelAlias"] if device.get("modelAlias") and device["modelAlias"] else "",
                     "sw_version": f"{adapter}_{address}"
                 },
                 "state_topic": state_topic

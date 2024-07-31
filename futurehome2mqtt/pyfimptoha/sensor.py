@@ -46,7 +46,7 @@ def battery(
     battery_component = {
         "name": "(batteri)",
         "device_class": "battery",
-        "entity_category": "diagnostic",
+        # "entity_category": "diagnostic",
         "unit_of_measurement": unit_of_measurement,
         "value_template": "{{ value_json.val | round(0) }}"
     }
