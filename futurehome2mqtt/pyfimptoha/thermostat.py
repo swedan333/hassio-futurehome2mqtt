@@ -24,15 +24,12 @@ def new_thermostat(
     if "sensor_humid" in device["services"]:
         humid_component = new_humid_component(device)
 
+    current_temperature_component = None
     if "sensor_temp" in device["services"]:
-        current_temperature_topic = f'pt:j1/mt:evt{device["services"]["sensor_temp"]["addr"]}'
-    else:
-        # TODO logic to find thing_role:main on device with same address (e.g heatit on _4)
-        current_temperature_topic = ""
+        current_temperature_component = new_current_temperature_component(device)
+    # TODO logic to find thing_role:main on device with same address (e.g heatit on _4)
 
     thermostat_component = {
-        "current_temperature_template": "{{ value_json.val | round(1) }}",
-        "current_temperature_topic": current_temperature_topic,
         "max_temp": 40.0,
         "min_temp": 5.0,
         "mode_command_template": """
@@ -89,6 +86,9 @@ def new_thermostat(
 
     if humid_component:
         merged_component = {**merged_component, **humid_component}
+
+    if current_temperature_component:
+        merged_component = {**merged_component, **current_temperature_component}
 
     payload = json.dumps(merged_component)
     mqtt.publish(f"homeassistant/climate/{identifier}/config", payload)
@@ -174,3 +174,11 @@ def new_humid_component(device):
         "current_humidity_topic": f"pt:j1/mt:evt{sensor_humid['addr']}"
     }
     return humid_component
+
+
+def new_current_temperature_component(device):
+    current_temperature_component = {
+        "current_temperature_topic": f'pt:j1/mt:evt{device["services"]["sensor_temp"]["addr"]}',
+        "current_temperature_template": "{{ value_json.val | round(1) }}"
+    }
+    return current_temperature_component
