@@ -1,3 +1,8 @@
+## 0.3.1
+
+- Fixes: Fails to install on Home Assistant. Error: `The command '/bin/ash -o pipefail -c apk add --no-cache python3 py-pip && pip3 install --upgrade pip' returned a non-zero code: 1`
+- (dev) moved devcontainer.json file to the recommended folder. Ref [docs](https://developers.home-assistant.io/docs/add-ons/testing/)
+
 ## 0.3.0
 
 ### New, fixed, and improved:
