@@ -39,11 +39,16 @@ Read more about the [FIMP protocol](https://github.com/futurehomeno/fimp-api).
   - Set in entity `select.fh_mode`
 - Shortcuts
 
-### Untested in new version (0.1 vs 0.2)
+## Known issues / limitations
 
-These things are probably no longer working
-
-- Scene control. Exposed as sensor. Tested with Fibaro button, and Namron 4 channel (K8)
+- Chargepoint (Easee, Zaptec etc.) is not currently supported
+- Scene control (Fibaro button, Heatit Z-Push 4 etc.) is not currently supported
+- Music players (Sonos etc.) is not currently supported
+- Sirens are not currently supported
+- On some thermostats (e.g Heatit) you are currently not able to readout current
+  measured temperature (room temp sensor or floor temp sensor) directly on the thermostat card as it is on a different device
+- Some devices might still use sensor_power (deprecated) and sensor_voltage (deprecated) instead of `meter_elec`. This needs to be fixed by Futurehome.
+- Shortcuts triggered externally (e.g from Futurehome app) is not logged in logbook
 
 # Configuration and installation
 
@@ -58,10 +63,9 @@ These things are probably no longer working
 Home Assistant must use the MQTT broker provided by the Futurehome Smarthub.
 It's recommended to configure MQTT via GUI, and not via `.yaml`
 
+Settings -> Device & services -> add integration -> search for `MQTT` -> select `MQTT` -> fill in hub IP and credentials. (NOTE that port should be 1884):
+
 ```
-# MQTT
-mqtt:
-  # Futurehome smart hub
   broker: *hub ip*
   username: *username*
   password: *password*
@@ -73,7 +77,9 @@ mqtt:
 ### 2. Install add-on
 
 1. Add this repo as an add-on repository
+   - Settings -> Add-ons -> Add-on store -> 3 dots in top right -> repositories -> paste link to this repository -> add
 2. Install the addon 'Futurehome FIMP to MQTT'
+   - Select `Futurehome FIMP integration` in the Add-on store -> install
 3. Configure the addon with the same parameters as before
 4. Start it. Supported devices should appear in the Home Assistant UI
 

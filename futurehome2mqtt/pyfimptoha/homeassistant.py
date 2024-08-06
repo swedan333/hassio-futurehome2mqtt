@@ -98,8 +98,7 @@ def create_components(
                 print(f"- Service: {service_name}")
                 if device["type"]["type"] == "meter" and \
                         device["type"]["subtype"] == "main_elec": # HAN Meter
-                    pass
-                    # TODO add handling of evt.meter_ext.report
+                    status = meter_elec.new_han(**common_params, service_name=service_name)
                 else:
                     status = meter_elec.new_sensor(**common_params, service_name=service_name)
                 if status:

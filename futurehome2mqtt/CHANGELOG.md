@@ -1,3 +1,10 @@
+## 0.3.2
+
+- Added basic HAN sensor support
+- Updated README
+  - Clearer installation instructions
+  - Added 'Known issues' section
+
 ## 0.3.1
 
 - Fixes: Fails to install on Home Assistant. Error: `The command '/bin/ash -o pipefail -c apk add --no-cache python3 py-pip && pip3 install --upgrade pip' returned a non-zero code: 1`

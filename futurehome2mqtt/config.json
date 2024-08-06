@@ -1,6 +1,6 @@
 {
     "name": "Futurehome FIMP integration",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "slug": "futurehome_fimp",
     "description": "Futurehome FIMP integration",
     "url": "https://github.com/runelangseid/hassio-futurehome2mqtt",
@@ -24,6 +24,6 @@
         "fimpport": "int",
         "client_id": "str",
         "debug": "bool",
-        "selected_devices": "str"
+        "selected_devices": "str?"
       }
 }
