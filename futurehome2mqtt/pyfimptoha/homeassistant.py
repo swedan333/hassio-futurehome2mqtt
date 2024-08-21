@@ -41,7 +41,8 @@ def create_components(
 
         address = device["fimp"]["address"]
         adapter = get_adapter_name(device)
-        name = device["client"]["name"]
+        #name = device["client"]["name"]
+        name = device.get("client", {}).get("name", "Unknown Device")
         vinc_id = device["id"]
         functionality = device["functionality"]
         room_alias = get_room_alias(rooms, room_id)
